@@ -1,4 +1,4 @@
-package at.ftec.aerogear.model;
+package at.ftec.aerogear.model.result;
 
 /**
  * @author Michael Fischelmayer

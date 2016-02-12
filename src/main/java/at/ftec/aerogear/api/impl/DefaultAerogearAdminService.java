@@ -2,9 +2,7 @@ package at.ftec.aerogear.api.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.validation.ConstraintViolation;
@@ -12,39 +10,37 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
-import at.ftec.aerogear.exception.AerogearHelperException;
-import at.ftec.aerogear.model.HealthStatus;
-import at.ftec.aerogear.model.PushApplicationsResult;
-import at.ftec.aerogear.model.PushServer;
-import at.ftec.aerogear.util.KeycloakHelper;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.mashape.unirest.http.HttpMethod;
-import com.mashape.unirest.request.body.RequestBodyEntity;
 import org.jboss.aerogear.unifiedpush.api.Installation;
 import org.jboss.aerogear.unifiedpush.api.PushApplication;
+import org.jboss.aerogear.unifiedpush.api.iOSVariant;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import at.ftec.aerogear.api.AerogearAdminService;
 import at.ftec.aerogear.deserializer.PushApplicationDeserializer;
+import at.ftec.aerogear.exception.AerogearHelperException;
+import at.ftec.aerogear.model.PushServer;
+import at.ftec.aerogear.model.result.HealthStatus;
+import at.ftec.aerogear.model.result.PushApplicationsResult;
+import at.ftec.aerogear.util.KeycloakHelper;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.mashape.unirest.http.HttpMethod;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import com.mashape.unirest.request.HttpRequest;
-import com.mashape.unirest.request.HttpRequestWithBody;
 
 /**
- * TODO use acces token for multiple calls (logic for refresh token) TODO create URL
- * Builder or something like that TODO calls einheiltiches "checkRespone" oder der
- * gleichen
+ * TODO use acces token for multiple calls (logic for refresh token)
+ * TODO create URLBuilder or something like that
+ * TODO calls einheiltiches "checkRespone" oder der gleichen
  *
  * @author Michael Fischelmayer
  */
@@ -57,6 +53,8 @@ public class DefaultAerogearAdminService implements AerogearAdminService {
 	private ObjectMapper objectMapper = new ObjectMapper();
 	private ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
 	private Validator validator = validatorFactory.getValidator();
+
+	private String keycloakAccessToken;
 
 
 
@@ -161,7 +159,7 @@ public class DefaultAerogearAdminService implements AerogearAdminService {
 	}
 
 	@Override
-	public List<Installation> showAllInstallations( String variantId ) throws AerogearHelperException {
+	public List<Installation> showInstallations(String variantId ) throws AerogearHelperException {
 		String installationsOfVariantUrl = pushServer.getPushUrl() + PUSH_REST_CONTEXT + "/export/" + variantId + "/installations";
 		HttpResponse response = getRequest( installationsOfVariantUrl, true );
 		try {
@@ -174,7 +172,59 @@ public class DefaultAerogearAdminService implements AerogearAdminService {
 		}
 	}
 
+	@Override
+	public List<iOSVariant> showIOSVariants( String appId ) throws AerogearHelperException {
+		if (appId == null || appId.length() < 1) {
+			throw new IllegalArgumentException( "appId must not be null or empty" );
+		}
+		String showVariantsUrl = pushServer.getPushUrl() + PUSH_REST_CONTEXT + "/applications/" + appId + "/ios";
+		HttpResponse response = getRequest( showVariantsUrl, true );
+		try {
+			// TODO Custom Deserializer? ( -> Can not construct instance of org.jboss.aerogear.unifiedpush.api.VariantType from String value ("ios"): value not one of declared Enum instance names: [WINDOWS_WNS, WINDOWS_MPNS, SIMPLE_PUSH, ADM, IOS, ANDROID])
+			return objectMapper.readValue( response.getBody().toString(), new TypeReference<List<iOSVariant>>() {
+			} );
+		} catch (IOException e) {
+			throw new AerogearHelperException( e );
+		}
+	}
 
+	@Override
+	public iOSVariant createIOSVariant( iOSVariant iosVar, String appId ) throws AerogearHelperException {
+		if (appId == null || appId.length() < 1) {
+			throw new IllegalArgumentException( "appId must not be null or empty" );
+		}
+		String createVariantsUrl = pushServer.getPushUrl() + PUSH_REST_CONTEXT + "/applications/" + appId + "/ios";
+
+		HttpResponse response = postRequest( createVariantsUrl, true, iosVar, true );
+		try {
+			return objectMapper.readValue( response.getBody().toString(), iOSVariant.class );
+		} catch (IOException e) {
+			throw new AerogearHelperException( e );
+		}
+	}
+
+	@Override
+	public iOSVariant updateIOSVariant( iOSVariant iOSVariant, String appId, String variantId ) throws AerogearHelperException {
+		if (appId == null || appId.length() < 1 || variantId == null || variantId.length() < 1) {
+			throw new IllegalArgumentException( "appId and variantId must not be null or empty" );
+		}
+		String updateVariantsUrl = pushServer.getPushUrl() + PUSH_REST_CONTEXT + "/applications/" + appId + "/ios/" + variantId;
+		HttpResponse response = putRequest( updateVariantsUrl, true, iOSVariant, true );
+		try {
+			return objectMapper.readValue( response.getBody().toString(), iOSVariant.class );
+		} catch (IOException e) {
+			throw new AerogearHelperException( e );
+		}
+	}
+
+
+	/**
+	 * check the response.
+	 * throw an Exception for http status not 2xx (eg. 400, 401, 300, ...)
+	 *
+	 * @param response
+	 * @throws AerogearHelperException if the response is not a status code '2XX'
+     */
 	private void checkRespone( HttpResponse response ) throws AerogearHelperException {
 		if (response == null || !String.valueOf( response.getStatus() ).startsWith( "2" )) {
 			throw new AerogearHelperException( "aerogear remote error. Status: " + response.getStatus() + " - "
@@ -182,6 +232,13 @@ public class DefaultAerogearAdminService implements AerogearAdminService {
 		}
 	}
 
+	/**
+	 * validate the given bean
+	 *
+	 * @param bean
+	 * @param <T>
+	 * @throws AerogearHelperException if an ConstraintViolation happen
+     */
 	private <T> void validateBean( T bean ) throws AerogearHelperException {
 		Set<ConstraintViolation<T>> constraintViolations = validator.validate( bean );
 
@@ -220,6 +277,11 @@ public class DefaultAerogearAdminService implements AerogearAdminService {
 		return callPushServer( url, isKeycloak, HttpMethod.DELETE, null, false, basicAuthUsername, basicAuthPassword );
 	}
 
+	private <T> HttpResponse putRequest( String url, boolean isKeycloak, T bean, boolean validateBean ) throws AerogearHelperException {
+		return callPushServer( url, isKeycloak, HttpMethod.PUT, bean, validateBean, null, null );
+	}
+
+
 
 	/**
 	 *
@@ -238,6 +300,7 @@ public class DefaultAerogearAdminService implements AerogearAdminService {
 				throw new IllegalArgumentException("url must not be null or empty");
 			}
 
+			// validate bean locally before sending
 			if(validateBean) {
 				validateBean( bean );
 			}
@@ -257,12 +320,17 @@ public class DefaultAerogearAdminService implements AerogearAdminService {
 				case DELETE:
 					httpRequest = Unirest.delete(url);
 					break;
+				case PUT:
+					httpRequest = Unirest.put( url ).body( objectMapper.writeValueAsString( bean ) ).getHttpRequest();	//TODO variable (see POST)
+					break;
 			}
 
 			// use keycloak Authentication
-			if(isKeycloakAuth) {
-				String accessToken = KeycloakHelper.getAccessToken( pushServer );
-				httpRequest.header( "Authorization", "Bearer " + accessToken );
+			if (isKeycloakAuth) {
+				if (keycloakAccessToken == null || keycloakAccessToken.length() < 1) {
+					keycloakAccessToken = KeycloakHelper.getAccessToken( pushServer );
+				}
+				httpRequest.header( "Authorization", "Bearer " + keycloakAccessToken );
 			}
 
 			// check for HTTP Basic Authentication

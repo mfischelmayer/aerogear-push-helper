@@ -9,8 +9,8 @@ import org.junit.Test;
 
 import at.ftec.aerogear.api.AerogearAdminService;
 import at.ftec.aerogear.exception.AerogearHelperException;
-import at.ftec.aerogear.model.HealthStatus;
-import at.ftec.aerogear.model.PushApplicationsResult;
+import at.ftec.aerogear.model.result.HealthStatus;
+import at.ftec.aerogear.model.result.PushApplicationsResult;
 import at.ftec.aerogear.model.PushServer;
 
 /**
@@ -68,6 +68,6 @@ public class DefaultAerogearAdminServiceIT2 {
 
     @Test
     public void showAllInstallationsTest() throws AerogearHelperException {
-        List<Installation> installations = adminService.showAllInstallations("42a7468e-ca2f-4342-88cb-086853d5672d");
+        List<Installation> installations = adminService.showInstallations("42a7468e-ca2f-4342-88cb-086853d5672d");
     }
 }

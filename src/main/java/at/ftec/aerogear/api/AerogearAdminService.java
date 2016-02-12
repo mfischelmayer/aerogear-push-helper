@@ -1,10 +1,11 @@
 package at.ftec.aerogear.api;
 
 import at.ftec.aerogear.exception.AerogearHelperException;
-import at.ftec.aerogear.model.HealthStatus;
-import at.ftec.aerogear.model.PushApplicationsResult;
+import at.ftec.aerogear.model.result.HealthStatus;
+import at.ftec.aerogear.model.result.PushApplicationsResult;
 import org.jboss.aerogear.unifiedpush.api.Installation;
 import org.jboss.aerogear.unifiedpush.api.PushApplication;
+import org.jboss.aerogear.unifiedpush.api.iOSVariant;
 
 import java.util.List;
 
@@ -71,11 +72,45 @@ public interface AerogearAdminService {
 
 
     /**
-     * show all installations (devices) from an variant
+     * show all installations (devices) for a variant
      *
      * @param variantId
      * @return
      * @throws AerogearHelperException
      */
-    List<Installation> showAllInstallations(String variantId) throws AerogearHelperException;
+    List<Installation> showInstallations(String variantId) throws AerogearHelperException;
+
+
+    /**
+     * show all iOS Variants for an application
+     *
+     * @param appId
+     * @return
+     * @throws AerogearHelperException
+     */
+    List<iOSVariant> showIOSVariants(String appId) throws AerogearHelperException;
+
+
+    /**
+     * create a new iOS Variant for the application
+     *
+     * @param iOSVariant
+     * @param appId
+     * @return
+     * @throws AerogearHelperException
+     */
+    iOSVariant createIOSVariant(iOSVariant iOSVariant, String appId ) throws AerogearHelperException;
+
+    /**
+     * update an existing iOS Variant for an application
+     *
+     * @param iOSVariant
+     * @param appId
+     * @param variantId
+     * @return
+     * @throws AerogearHelperException
+     */
+    iOSVariant updateIOSVariant(iOSVariant iOSVariant, String appId, String variantId ) throws AerogearHelperException;
+
+
 }
