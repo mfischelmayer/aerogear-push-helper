@@ -13,8 +13,8 @@ Attention - project in an early alpha ;-)
 // create a instance of the PushServer you like to connect
 PushServer pushServer = new PushServer("https://aerogear.example-server.at");
 
-// for the most administrative calls you need to authenticate via keycloack
-pushServer.setKeycloackCredentials( String username, String password, String clientId );
+// for the most administrative calls you need to authenticate via keycloak
+pushServer.setKeycloakCredentials( String username, String password, String clientId );
 
 // create the push administration service
 AergearAdminService admin = new DefaultAergearAdminService( pushServer );

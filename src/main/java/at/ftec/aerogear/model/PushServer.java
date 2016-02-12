@@ -82,7 +82,7 @@ public class PushServer {
      * @param password
      * @param clientId
      */
-    public void setKeycloackCredentials( String username, String password, String clientId ) {
+    public void setKeycloakCredentials(String username, String password, String clientId ) {
         setUsername(username);
         setPassword(password);
         setClientId(clientId);
