@@ -14,7 +14,7 @@ Attention - project in an early alpha ;-)
 PushServer pushServer = new PushServer("https://aerogear.example-server.at");
 
 // for the most administrative calls you need to authenticate via keycloack
-pushServer.setKeycloackCredentials( String username, String password, String clientId )
+pushServer.setKeycloackCredentials( String username, String password, String clientId );
 
 // create the push administration service
 AergearAdminService admin = new DefaultAergearAdminService( pushServer );
@@ -23,17 +23,9 @@ AergearAdminService admin = new DefaultAergearAdminService( pushServer );
 List<PushApplicaitonResult> pushAppsOnServer = admin.showPushApplications();
 ```
 
-### actually the API supports the following calls
-```java
-- showPushApplications()
-- createPushApplication( PushApplication newPushApp );
-- healthStatus();
-- registerDevice( Installation newInstallation );
-```
-
-### some other examples
+### some examples
 ##### register Device
-```
+```java
 Installation installation = new Installation();
 installation.setDeviceToken("95f86df5b64e20a45e0e67782984abeb553a3232fcedf1d75407885798be67");
 installation.setAlias("ftec Test Device");
@@ -42,7 +34,7 @@ adminService.registerDevice(installation, "your-variant-id", "your-variant-secre
 ```
 
 ##### create Push Application
-```
+```java
 PushApplication newPushApp = new PushApplication();
 newPushApp.setName( "My Test Application" );
 newPushApp.setDescription( "created with ftec aerogear lib" );
@@ -52,7 +44,7 @@ adminService.createPushApplication( newPushApp );
 ```
 
 ##### show health status
-```
+```java
 HealthStatus healthStatus = adminService.showHealthInfo();
 String healthSummary = healthStatus.getSummary();
 ```
