@@ -5,6 +5,7 @@ import at.ftec.aerogear.model.result.HealthStatus;
 import at.ftec.aerogear.model.result.PushApplicationsResult;
 import org.jboss.aerogear.unifiedpush.api.Installation;
 import org.jboss.aerogear.unifiedpush.api.PushApplication;
+import org.jboss.aerogear.unifiedpush.api.Variant;
 import org.jboss.aerogear.unifiedpush.api.iOSVariant;
 
 import java.util.List;
@@ -90,6 +91,8 @@ public interface AerogearAdminService {
      */
     List<iOSVariant> showIOSVariants(String appId) throws AerogearHelperException;
 
+
+    Variant createVariant(Variant variant, String appId ) throws AerogearHelperException;
 
     /**
      * create a new iOS Variant for the application
