@@ -10,9 +10,7 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
-import org.jboss.aerogear.unifiedpush.api.Installation;
-import org.jboss.aerogear.unifiedpush.api.PushApplication;
-import org.jboss.aerogear.unifiedpush.api.iOSVariant;
+import org.jboss.aerogear.unifiedpush.api.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -50,7 +48,7 @@ public class DefaultAerogearAdminService implements AerogearAdminService {
 
 	private final PushServer pushServer;
 
-	private ObjectMapper objectMapper = new ObjectMapper();
+	private final ObjectMapper objectMapper = new ObjectMapper();
 	private ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
 	private Validator validator = validatorFactory.getValidator();
 
@@ -63,6 +61,9 @@ public class DefaultAerogearAdminService implements AerogearAdminService {
 			throw new IllegalArgumentException("push server must not be null or empty");
 		}
 		this.pushServer = pushServer;
+		SimpleModule module = new SimpleModule();
+		module.addDeserializer(VariantType.class, new VariantTypeDeserializer());
+		objectMapper.registerModule(module);
 	}
 
 	@Override
@@ -183,6 +184,37 @@ public class DefaultAerogearAdminService implements AerogearAdminService {
 			// TODO Custom Deserializer? ( -> Can not construct instance of org.jboss.aerogear.unifiedpush.api.VariantType from String value ("ios"): value not one of declared Enum instance names: [WINDOWS_WNS, WINDOWS_MPNS, SIMPLE_PUSH, ADM, IOS, ANDROID])
 			return objectMapper.readValue( response.getBody().toString(), new TypeReference<List<iOSVariant>>() {
 			} );
+		} catch (IOException e) {
+			throw new AerogearHelperException( e );
+		}
+	}
+
+
+	private String getCreateVariantEndpoint(final String appId, final Variant variant) {
+		String createVariantsUrl = pushServer.getPushUrl() + PUSH_REST_CONTEXT + "/applications/" + appId;
+
+		switch (variant.getType()) {
+			case ADM: return createVariantsUrl + "/adm";
+			case ANDROID: return createVariantsUrl + "/android";
+			case SIMPLE_PUSH: return createVariantsUrl + "/simplePush";
+			case IOS: return createVariantsUrl + "/ios";
+			case WINDOWS_MPNS: return createVariantsUrl + "/windowsMPNS";
+			case WINDOWS_WNS: return createVariantsUrl + "/windowsWNS";
+		}
+
+		throw new IllegalStateException("Unknown variant type : " + variant.getType());
+	}
+
+	@Override
+	public Variant createVariant(Variant variant, String appId) throws AerogearHelperException {
+		if (appId == null || appId.length() < 1) {
+			throw new IllegalArgumentException( "appId must not be null or empty" );
+		}
+		String createVariantsUrl = getCreateVariantEndpoint(appId, variant);
+
+		HttpResponse response = postRequest( createVariantsUrl, true, variant, true );
+		try {
+			return objectMapper.readValue( response.getBody().toString(), variant.getClass() );
 		} catch (IOException e) {
 			throw new AerogearHelperException( e );
 		}
